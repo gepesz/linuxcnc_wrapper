@@ -1,0 +1,58 @@
+API Csoportok:
+
+    status:     Gépi állapot lekérdezése.
+    motion:     Mozgásvezérlés.
+    tool:       Szerszámkezelés.
+    config:     Konfigurációs beállítások kezelése.
+    errors:     Hibakezelés és naplózás.
+    ui:         Felhasználói interfész műveletek.
+
+WebSocket Csatornák:
+
+    Valós idejű állapotfrissítések (pl. pozíciók, sebességek).
+    Vezérlési parancsok (pl. gép indítása, szüneteltetése).
+
+LinuxCNC Python Modul Fő Funkciói
+    1. Gépi Állapot Lekérdezése
+        Cél: Információ nyerése a CNC gép aktuális állapotáról.
+        Példák:
+        Aktuális tengelypozíciók (X, Y, Z).
+        Sebességek és gyorsulások.
+        Gépi állapot: futás, szünet, leállás.
+        Vészleállítási jelzés.
+    2. Mozgásvezérlés
+        Cél: A gép mozgatása és vezérlése G-kód vagy egyedi parancsok alapján.
+        Példák:
+            G-kód fájlok betöltése és végrehajtása.
+            Egyedi parancsok küldése tengelyek mozgatására.
+            Pozíció nullázása vagy referenciapont beállítása.
+    3. Szerszámkezelés
+        Cél: Szerszámokkal kapcsolatos műveletek kezelése.
+        Példák:
+            Szerszámcsere végrehajtása.
+            Szerszámparaméterek (pl. átmérő, hossz) kezelése.
+            Szerszámkompenzáció alkalmazása.
+    4. Konfigurációs Beállítások
+        Cél: A CNC gép konfigurációjának kezelése és módosítása.
+        Példák:
+            Tengelyek határainak beállítása.
+            Sebesség- és gyorsulási limitek megadása.
+            Alapértelmezett koordináta-rendszer konfigurálása.
+    5. Hibakezelés és Naplózás
+        Cél: Hibák kezelése és diagnosztikai információk gyűjtése.
+        Példák:
+            Hibakódok lekérdezése és naplózása.
+            Diagnosztikai üzenetek továbbítása a frontend felé.
+    6. Felhasználói Interfész Műveletek
+        Cél: Közvetlen interakció a LinuxCNC kezelőfelületével (pl. Axis GUI).
+        Példák:
+            Munkadarab nullázása.
+            Jelenlegi program futtatásának vezérlése (indítás, szünet, leállítás).
+
+Javasolt Fájlszerkezet
+    machine_status.py -- Gép állapot lekérdezések (get_machine_status, get_axis_position, stb.).
+    motion_control.py -- Mozgásvezérlési funkciók (move_machine, jövőbeli mozgási parancsok).
+    tool_management.py -- Szerszámkezelési funkciók (szerszámcsere, szerszámparaméterek).
+    configuration.py -- Konfigurációs beállítások kezelése (maximális sebesség, gyorsulás).
+    error_handling.py -- Hibakezelési és naplózási funkciók (get_error_code, get_error_message).
+    user_interface.py -- Felhasználói interfész műveletek (nullázás, G-kód vezérlés).
