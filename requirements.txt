@@ -1,6 +1,6 @@
 annotated-types==0.7.0
 anyio==4.8.0
-fastapi==0.115.7
+fastapi==0.115.8
 idna==3.10
 pydantic==2.10.6
 pydantic_core==2.27.2
