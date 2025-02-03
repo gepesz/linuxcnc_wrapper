@@ -1,22 +1,10 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
-from services.machine_service import (
-    get_machine_status,
-    get_axis_position,
-    get_joint_position,
-    get_motion_mode, get_all_axes_positions,
-)
-from services.motion_control import (
-    enable_machine,
-    disable_machine,
-    move_machine,
-    home_axis,
-    home_all_axes,
-    stop_motion,
-    jog_axis,
-)
+from services.machine_service import *
+from services.motion_control import *
 import asyncio
 import logging
+import linuxcnc
 
 # Logger beállítása
 logging.basicConfig(level=logging.INFO)
@@ -43,21 +31,23 @@ async def status_endpoint():
     except Exception as e:
         return JSONResponse(status_code=500, content=json_response("error", "get_machine_status", "failed", error=str(e)))
 
-@app.get("/axis/{axis_id}/position")
-async def axis_position_endpoint(axis_id: int):
+@app.get("/status/full")
+async def full_status_endpoint():
     try:
-        position = get_axis_position(axis_id)
-        return json_response("response", "get_axis_position", "success", {"axis": axis_id, "position": position})
+        stat = linuxcnc.stat()
+        stat.poll()
+        full_status = {attr: getattr(stat, attr) for attr in dir(stat) if not attr.startswith("_") and callable(getattr(stat, attr)) is False}
+        return json_response("response", "get_full_linuxcnc_status", "success", {"full_status": full_status})
     except Exception as e:
-        return JSONResponse(status_code=500, content=json_response("error", "get_axis_position", "failed", error=str(e)))
+        return JSONResponse(status_code=500, content=json_response("error", "get_full_linuxcnc_status", "failed", error=str(e)))
 
 @app.get("/joint/{joint_id}/position")
 async def joint_position_endpoint(joint_id: int):
     try:
         position = get_joint_position(joint_id)
-        return json_response("response", "get_joint_position", "success", {"joint": joint_id, "position": position})
+        return json_response("response", "get_axis_position", "success", {"axis": joint_id, "position": position})
     except Exception as e:
-        return JSONResponse(status_code=500, content=json_response("error", "get_joint_position", "failed", error=str(e)))
+        return JSONResponse(status_code=500, content=json_response("error", "get_axis_position", "failed", error=str(e)))
 
 @app.post("/motion/enable")
 async def enable_machine_endpoint():
@@ -83,18 +73,18 @@ async def move_machine_endpoint(x: float, y: float, z: float):
     except Exception as e:
         return JSONResponse(status_code=500, content=json_response("error", "move_machine", "failed", error=str(e)))
 
-@app.post("/motion/home/{axis_id}")
-async def home_axis_endpoint(axis_id: int):
+@app.post("/motion/home/{joint_id}")
+async def home_joint_endpoint(joint_id: int):
     try:
-        home_axis(axis_id)
-        return json_response("response", "home_axis", "success", {"axis": axis_id})
+        home_joint(joint_id)
+        return json_response("response", "home_axis", "success", {"axis": joint_id})
     except Exception as e:
         return JSONResponse(status_code=500, content=json_response("error", "home_axis", "failed", error=str(e)))
 
 @app.post("/motion/home/all")
-async def home_all_axes_endpoint():
+async def home_all_joints_endpoint():
     try:
-        home_all_axes()
+        home_all_joints()
         return json_response("response", "home_all_axes", "success")
     except Exception as e:
         return JSONResponse(status_code=500, content=json_response("error", "home_all_axes", "failed", error=str(e)))
@@ -106,6 +96,14 @@ async def stop_motion_endpoint():
         return json_response("response", "stop_motion", "success")
     except Exception as e:
         return JSONResponse(status_code=500, content=json_response("error", "stop_motion", "failed", error=str(e)))
+
+@app.post("/motion/jog")
+async def jog_joint_endpoint(joint: int, direction: int, speed: float):
+    try:
+        await jog_joint(joint, direction, speed)
+        return json_response("response", "jog_joint", "success", {"joint": joint, "direction": direction, "speed": speed})
+    except Exception as e:
+        return JSONResponse(status_code=500, content=json_response("error", "jog_joint", "failed", error=str(e)))
 
 # --- WebSocket Endpoint ---
 @app.websocket("/ws/status")
@@ -128,7 +126,7 @@ async def status_websocket(websocket: WebSocket):
             websocket_data = json_response("event", "machine_status", "success", {
                 "machine_status": get_machine_status(),
                 "motion_mode": get_motion_mode(),
-                "axes_position": get_all_axes_positions()
+                "joints_position": get_all_joint_positions()
             })
             await websocket.send_json(websocket_data)
             await asyncio.sleep(1)
