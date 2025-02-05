@@ -45,19 +45,14 @@ def home_all_joints():
 # Mozgás leállítása
 def stop_motion():
     """
-    Az összes mozgás azonnali leállítása LinuxCNC-ben.
+    Leállítja a folyamatban lévő mozgást.
     """
     cmd.abort()
 
-# Egy adott csukló (joint) folyamatos mozgatása (jogging)
+# Egy adott csukló (joint) mozgatása (jog)
 async def jog_joint(joint: int, direction: int, speed: float):
     """
-    Egy adott csukló (joint) jog mozgatása LinuxCNC-ben.
+    Egy adott csukló mozgatása megadott irányba és sebességgel.
     """
-    cmd.mode(linuxcnc.MODE_MANUAL)
-    cmd.wait_complete()
-    jog_dir = linuxcnc.JOG_POS if direction > 0 else linuxcnc.JOG_NEG
-    cmd.jog(linuxcnc.JOG_CONTINUOUS, joint, jog_dir, speed)
+    cmd.jog(linuxcnc.JOG_CONTINUOUS, joint, direction * speed)
     await asyncio.sleep(0.1)
-    cmd.jog(linuxcnc.JOG_STOP, joint)
-
