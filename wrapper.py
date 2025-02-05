@@ -1,5 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
 from services.status_service import *
 from services.command_service import *
 from services.error_service import *
@@ -9,6 +11,10 @@ import logging
 # Logger beállítása
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("linuxcnc_wrapper")
+
+class GCodeUpload(BaseModel):
+    filename: str
+    content: str
 
 # FastAPI alkalmazás inicializálása
 app = FastAPI(title="LinuxCNC Wrapper", description="A wrapper between LinuxCNC and frontend", version="1.1.0")
@@ -25,7 +31,43 @@ def json_response(command: str, status: str, payload: dict = None, error: str = 
 
 
 # --- REST Endpointok (Command csoport) ---
-@app.post("/motion/home/{joint_id}")
+
+# --- Vészgomb aktiválása/deaktiválása ---
+@app.post("/cmd/estop")
+async def enable_machine_endpoint():
+    try:
+        estop()
+        return json_response("estop", "activated")
+    except Exception as e:
+        return JSONResponse(status_code=500, content=json_response("enable_machine", "failed", error=str(e)))
+
+@app.post("/cmd/estop_reset")
+async def disable_machine_endpoint():
+    try:
+        estop_reset()
+        return json_response("estop", "reset")
+    except Exception as e:
+        return JSONResponse(status_code=500, content=json_response("disable_machine", "failed", error=str(e)))
+
+# --- A gép ki- és be kapcsolása  ---
+@app.post("/cmd/enable")
+async def enable_machine_endpoint():
+    try:
+        enable_machine()
+        return json_response("machine", "ON")
+    except Exception as e:
+        return JSONResponse(status_code=500, content=json_response("enable_machine", "failed", error=str(e)))
+
+@app.post("/cmd/disable")
+async def disable_machine_endpoint():
+    try:
+        disable_machine()
+        return json_response("machine", "OFF")
+    except Exception as e:
+        return JSONResponse(status_code=500, content=json_response("disable_machine", "failed", error=str(e)))
+
+# --- A gép HOME poticionálása ---
+@app.post("/cmd/home/{joint_id}")
 async def home_joint_endpoint(joint_id: int):
     try:
         home_joint(joint_id)
@@ -33,8 +75,7 @@ async def home_joint_endpoint(joint_id: int):
     except Exception as e:
         return JSONResponse(status_code=500, content=json_response("home_joint", "failed", error=str(e)))
 
-
-@app.post("/motion/home/all")
+@app.post("/cmd/home/all")
 async def home_all_joints_endpoint():
     try:
         home_all_joints()
@@ -42,26 +83,8 @@ async def home_all_joints_endpoint():
     except Exception as e:
         return JSONResponse(status_code=500, content=json_response("home_all_joints", "failed", error=str(e)))
 
-
-@app.post("/motion/enable")
-async def enable_machine_endpoint():
-    try:
-        enable_machine()
-        return json_response("enable_machine", "success")
-    except Exception as e:
-        return JSONResponse(status_code=500, content=json_response("enable_machine", "failed", error=str(e)))
-
-
-@app.post("/motion/disable")
-async def disable_machine_endpoint():
-    try:
-        disable_machine()
-        return json_response("disable_machine", "success")
-    except Exception as e:
-        return JSONResponse(status_code=500, content=json_response("disable_machine", "failed", error=str(e)))
-
-
-@app.post("/motion/move")
+# --- A gép mozgatása ---
+@app.post("/cmd/move")
 async def move_machine_endpoint(x: float, y: float, z: float):
     try:
         await move_machine(x, y, z)
@@ -69,9 +92,22 @@ async def move_machine_endpoint(x: float, y: float, z: float):
     except Exception as e:
         return JSONResponse(status_code=500, content=json_response("move_machine", "failed", error=str(e)))
 
+# --- G-code file feltöltése ---
+@app.post("/cmd/load_gcode")
+async def load_gcode_file(data: GCodeUpload):
+    """
+    JSON-ben érkező G-kód fájl tartalmat továbbít LinuxCNC-be.
+    """
+    try:
+        result = load_gcode_into_linuxcnc(data.filename, data.content)
+        return result
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content=json_response("load_file", "failed", error=str(e)))
+
 
 # --- WebSocket Endpoint (Status és Error csoport) ---
-@app.websocket("/ws/status")
+@app.websocket("/ws/status/")
 async def status_websocket(websocket: WebSocket):
     await websocket.accept()
     try:

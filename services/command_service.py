@@ -5,13 +5,27 @@ import asyncio
 cmd = linuxcnc.command()
 
 # Gép engedélyezése
+def estop():
+    """
+    Engedélyezi a gép működését LinuxCNC-ben.
+    """
+    cmd.state(linuxcnc.STATE_ESTOP)
+
+# Gép letiltása
+def estop_reset():
+    """
+    Letiltja a gép működését LinuxCNC-ben.
+    """
+    cmd.state(linuxcnc.STATE_ESTOP_RESET)
+
+# Gép bekapcsolása
 def enable_machine():
     """
     Engedélyezi a gép működését LinuxCNC-ben.
     """
     cmd.state(linuxcnc.STATE_ON)
 
-# Gép letiltása
+# Gép kikapcsolása
 def disable_machine():
     """
     Letiltja a gép működését LinuxCNC-ben.
@@ -54,5 +68,23 @@ async def jog_joint(joint: int, direction: int, speed: float):
     """
     Egy adott csukló mozgatása megadott irányba és sebességgel.
     """
-    cmd.jog(linuxcnc.JOG_CONTINUOUS, joint, direction * speed)
+    cmd.mode (linuxcnc.MODE_MANUAL)
+    cmd.wait_complete()
+    jog_dir = 1 if direction > 0 else -1
+    cmd.jog(linuxcnc.JOG_CONTINUOUS, True, joint, direction * speed)
     await asyncio.sleep(0.1)
+    cmd.jog(linuxcnc.JOG_STOP, True, joint, 0)
+
+# G-kód fájl betöltése
+def load_gcode_into_linuxcnc(file_name: str, content: str):
+    """
+    Betölt egy G-kód fájlt a LinuxCNC-be.
+    """
+    try:
+        with open(file_name, "w") as file:
+            file.write(content)
+        cmd.program_open(file_name)
+        return {"command": "load_gcode", "status": "success", "message": f"File {file_name} loaded into LinuxCNC."}
+
+    except Exception as e:
+        return {"command": "load_gcode", "status": "failed", "error": str(e)}
