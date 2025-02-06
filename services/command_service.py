@@ -56,6 +56,20 @@ def home_all_joints():
     """
     cmd.home(-1)
 
+# Egy adott csukló (joint) nullázásának visszavonása
+def unhome_joint(joint_id: int):
+    """
+    Egy adott csukló (joint) home pozícióba állítása LinuxCNC-ben.
+    """
+    cmd.unhome(joint_id)
+
+# Összes csukló nullázásának visszavonása
+def unhome_all_joints():
+    """
+    Az összes csukló (joint) home pozícióba állítása LinuxCNC-ben.
+    """
+    cmd.unhome(-1)
+
 # Mozgás leállítása
 def stop_motion():
     """

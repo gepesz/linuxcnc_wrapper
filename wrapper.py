@@ -49,6 +49,7 @@ async def disable_machine_endpoint():
     except Exception as e:
         return JSONResponse(status_code=500, content=json_response("disable_machine", "failed", error=str(e)))
 
+
 # --- A gép ki- és be kapcsolása  ---
 @app.post("/cmd/enable")
 async def enable_machine_endpoint():
@@ -66,7 +67,8 @@ async def disable_machine_endpoint():
     except Exception as e:
         return JSONResponse(status_code=500, content=json_response("disable_machine", "failed", error=str(e)))
 
-# --- A gép HOME poticionálása ---
+
+# --- A gép HOME pozicionálása ---
 @app.post("/cmd/home/{joint_id}")
 async def home_joint_endpoint(joint_id: int):
     try:
@@ -75,13 +77,30 @@ async def home_joint_endpoint(joint_id: int):
     except Exception as e:
         return JSONResponse(status_code=500, content=json_response("home_joint", "failed", error=str(e)))
 
-@app.post("/cmd/home/all")
+@app.post("/cmd/home_all")
 async def home_all_joints_endpoint():
     try:
         home_all_joints()
         return json_response("home_all_joints", "success")
     except Exception as e:
         return JSONResponse(status_code=500, content=json_response("home_all_joints", "failed", error=str(e)))
+
+@app.post("/cmd/unhome/{joint_id}")
+async def home_joint_endpoint(joint_id: int):
+    try:
+        unhome_joint(joint_id)
+        return json_response("home_joint", "success", {"joint_id": joint_id})
+    except Exception as e:
+        return JSONResponse(status_code=500, content=json_response("home_joint", "failed", error=str(e)))
+
+@app.post("/cmd/unhome_all")
+async def home_all_joints_endpoint():
+    try:
+        unhome_all_joints()
+        return json_response("home_all_joints", "success")
+    except Exception as e:
+        return JSONResponse(status_code=500, content=json_response("home_all_joints", "failed", error=str(e)))
+
 
 # --- A gép mozgatása ---
 @app.post("/cmd/move")
@@ -91,6 +110,7 @@ async def move_machine_endpoint(x: float, y: float, z: float):
         return json_response("move_machine", "success", {"x": x, "y": y, "z": z})
     except Exception as e:
         return JSONResponse(status_code=500, content=json_response("move_machine", "failed", error=str(e)))
+
 
 # --- G-code file feltöltése ---
 @app.post("/cmd/load_gcode")
