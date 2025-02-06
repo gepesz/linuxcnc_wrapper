@@ -7,9 +7,9 @@ cmd = linuxcnc.command()
 stat = linuxcnc.stat()
 
 axis_to_joint = {
-    "X": [0],
-    "Y": [1,2],
-    "Z": [3]
+    "x": [0],
+    "y": [1,2],
+    "z": [3]
 }
 
 # Gép engedélyezése
