@@ -1,10 +1,10 @@
 import os
-
 import linuxcnc
 import asyncio
 
 # LinuxCNC command objektum inicializálása
 cmd = linuxcnc.command()
+stat = linuxcnc.stat()
 
 # Gép engedélyezése
 def estop():
@@ -61,16 +61,65 @@ def home_all_joints():
 # Egy adott csukló (joint) nullázásának visszavonása
 def unhome_joint(joint_id: int):
     """
-    Egy adott csukló (joint) home pozícióba állítása LinuxCNC-ben.
+    Egy adott csukló (joint) home pozíciójának törlése LinuxCNC-ben.
     """
-    cmd.unhome(joint_id)
+    try:
+        stat.poll()
+        # Ha a gép nincs joint módban, állítsuk be
+        if stat.task_mode != linuxcnc.MODE_MANUAL:
+            print("🔄 Átváltás joint módba...")
+            cmd.mode(linuxcnc.MODE_MANUAL)
+            cmd.wait_complete()
+
+        # Ha a gép nincs letiltva, tiltsuk le az unhome előtt
+        if not stat.enabled:
+            print("🛑 A gép letiltása az unhome előtt...")
+            cmd.state(linuxcnc.STATE_OFF)
+            cmd.wait_complete()
+
+        # Most már küldhetjük az unhome parancsot
+        print(f"🔄 Unhome joint {joint_id}...")
+        cmd.unhome(joint_id)
+        cmd.wait_complete()
+        cmd.state(linuxcnc.STATE_ON)
+
+        return {"command": "unhome", "status": "success", "message": f"Joint {joint_id} unhomed."}
+
+    except Exception as e:
+        return {"command": "unhome", "status": "failed", "error": str(e)}
+
+
 
 # Összes csukló nullázásának visszavonása
 def unhome_all_joints():
     """
-    Az összes csukló (joint) home pozícióba állítása LinuxCNC-ben.
+    Az összes csukló (joint) home pozíciójának törlése LinuxCNC-ben.
     """
-    cmd.unhome(-1)
+    try:
+        stat.poll()
+        # Ha a gép nincs joint módban, állítsuk be
+        if stat.task_mode != linuxcnc.MODE_MANUAL:
+            print("🔄 Átváltás joint módba...")
+            cmd.mode(linuxcnc.MODE_MANUAL)
+            cmd.wait_complete()
+
+        # Ha a gép nincs letiltva, tiltsuk le az unhome előtt
+        if not stat.enabled:
+            print("🛑 A gép letiltása az unhome előtt...")
+            cmd.state(linuxcnc.STATE_OFF)
+            cmd.wait_complete()
+
+        # Most már küldhetjük az unhome parancsot
+        print(f"🔄 Unhome az összes csuklóra...")
+        cmd.unhome(-1)
+        cmd.wait_complete()
+        cmd.state(linuxcnc.STATE_ON)
+
+        return {"command": "unhome_all", "status": "success", "message": "All joint unhomed"}
+
+    except Exception as e:
+        return {"command": "unhome_all", "status": "failed", "error": str(e)}
+
 
 # Mozgás leállítása
 def stop_motion():
