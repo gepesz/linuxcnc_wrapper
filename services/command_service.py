@@ -1,3 +1,5 @@
+import os
+
 import linuxcnc
 import asyncio
 
@@ -85,20 +87,29 @@ async def jog_joint(joint: int, direction: int, speed: float):
     cmd.mode (linuxcnc.MODE_MANUAL)
     cmd.wait_complete()
     jog_dir = 1 if direction > 0 else -1
-    cmd.jog(linuxcnc.JOG_CONTINUOUS, True, joint, direction * speed)
+    cmd.jog(linuxcnc.JOG_CONTINUOUS, True, joint, jog_dir * speed)
     await asyncio.sleep(0.1)
     cmd.jog(linuxcnc.JOG_STOP, True, joint, 0)
 
 # G-kód fájl betöltése
-def load_gcode_into_linuxcnc(file_name: str, content: str):
+def save_and_load_gcode_into_linuxcnc(filename: str, content: str):
     """
-    Betölt egy G-kód fájlt a LinuxCNC-be.
+    G-kód elmentése fájlba és betöltése LinuxCNC-be.
     """
+    LINUXCNC_GCODE_PATH = "/home/cnc/linuxcnc/nc_files"
     try:
-        with open(file_name, "w") as file:
+        file_path = os.path.join(LINUXCNC_GCODE_PATH, filename)
+        print(f"📂 Fájl mentése: {file_path}")  # 🛠 Debug kiírás
+
+        with open(file_path, "w") as file:
             file.write(content)
-        cmd.program_open(file_name)
-        return {"command": "load_gcode", "status": "success", "message": f"File {file_name} loaded into LinuxCNC."}
+
+        print(f"📥 Betöltés LinuxCNC-be: {file_path}")  # 🛠 Debug kiírás
+        c = linuxcnc.command()
+        c.program_open(file_path)
+
+        return {"command": "load_gcode", "status": "success", "message": f"File {filename} saved and loaded into LinuxCNC."}
 
     except Exception as e:
+        print(f"❌ Hiba LinuxCNC betöltésnél: {str(e)}")  # 🛠 Debug kiírás
         return {"command": "load_gcode", "status": "failed", "error": str(e)}

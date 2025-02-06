@@ -116,15 +116,16 @@ async def move_machine_endpoint(x: float, y: float, z: float):
 @app.post("/cmd/load_gcode")
 async def load_gcode_file(data: GCodeUpload):
     """
-    JSON-ben érkező G-kód fájl tartalmat továbbít LinuxCNC-be.
+    JSON-ben érkező G-kód fájl tartalmat elmenti és betölti LinuxCNC-be.
     """
     try:
-        result = load_gcode_into_linuxcnc(data.filename, data.content)
+        print(f"📩 Beérkező API hívás: {data}")  # 🛠 Debug kiírás
+        result = save_and_load_gcode_into_linuxcnc(data.filename, data.content)
         return result
 
     except Exception as e:
-        return JSONResponse(status_code=500, content=json_response("load_file", "failed", error=str(e)))
-
+        print(f"❌ API hiba: {str(e)}")  # 🛠 Hiba kiírás
+        return JSONResponse(status_code=500, content=json_response("load_gcode", "failed", error=str(e)))
 
 # --- WebSocket Endpoint (Status és Error csoport) ---
 @app.websocket("/ws/status/")
