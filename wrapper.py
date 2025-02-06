@@ -69,13 +69,13 @@ async def disable_machine_endpoint():
 
 
 # --- A gép HOME pozicionálása ---
-@app.post("/cmd/home/{joint_id}")
-async def home_joint_endpoint(joint_id: int):
+@app.post("/cmd/home/{axis}")
+async def home_joint_endpoint(axis: str):
     try:
-        home_joint(joint_id)
-        return json_response("home_joint", "success", {"joint_id": joint_id})
+        home_joint(axis)
+        return json_response("home_joint", "success", {"axis": axis})
     except Exception as e:
-        return JSONResponse(status_code=500, content=json_response("home_joint", "failed", error=str(e)))
+        return JSONResponse(status_code=500, content=json_response("home_axis", "failed", error=str(e)))
 
 @app.post("/cmd/home_all")
 async def home_all_joints_endpoint():
@@ -83,23 +83,23 @@ async def home_all_joints_endpoint():
         home_all_joints()
         return json_response("home_all_joints", "success")
     except Exception as e:
-        return JSONResponse(status_code=500, content=json_response("home_all_joints", "failed", error=str(e)))
+        return JSONResponse(status_code=500, content=json_response("home_all_axis", "failed", error=str(e)))
 
-@app.post("/cmd/unhome/{joint_id}")
-async def home_joint_endpoint(joint_id: int):
+@app.post("/cmd/unhome/{axis}")
+async def unhome_joint_endpoint(axis: str):
     try:
-        unhome_joint(joint_id)
-        return json_response("home_joint", "success", {"joint_id": joint_id})
+        unhome_joint(axis)
+        return json_response("home_joint", "success", {"axis": axis})
     except Exception as e:
-        return JSONResponse(status_code=500, content=json_response("home_joint", "failed", error=str(e)))
+        return JSONResponse(status_code=500, content=json_response("unhome_axis", "failed", error=str(e)))
 
 @app.post("/cmd/unhome_all")
-async def home_all_joints_endpoint():
+async def unhome_all_joints_endpoint():
     try:
         unhome_all_joints()
         return json_response("home_all_joints", "success")
     except Exception as e:
-        return JSONResponse(status_code=500, content=json_response("home_all_joints", "failed", error=str(e)))
+        return JSONResponse(status_code=500, content=json_response("unhome_all_axis", "failed", error=str(e)))
 
 
 # --- A gép mozgatása ---
